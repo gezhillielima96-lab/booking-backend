@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-// Thirrja e databazës (VETËM NJË HERË)
+// Thirrja e databazës
 const db = require('./config/db'); 
 
 const app = express();
@@ -19,12 +19,11 @@ app.use('/api', apiRoutes);
 
 // --- TESTI I LIDHJES ME TIDB ---
 db.query('SELECT 1')
-    .then(() => console.log("✅ LIDHJA ME TIDB ONLINE U KRYE ME SUKSES! "))
+    .then(() => console.log("✅ LIDHJA ME TIDB ONLINE U KRYE ME SUKSES!"))
     .catch(err => console.log("❌ GABIM NE LIDHJEN ME TIDB:", err));
-// ------------------------------
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Serveri po punon në portin ${PORT}`);
-    console.log(`Testo këtu: http://localhost:${PORT}/api/all`);
+// --- NDRYSHIMI PER RENDER ---
+const PORT = process.env.PORT || 10000; // Render shpesh përdor 10000 ose variablin e tij
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Serveri është LIVE në portin ${PORT}`);
 });
