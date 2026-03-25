@@ -1,11 +1,10 @@
 const db = require('../config/db');
 
 const Booking = {
-   
     getAdminDashboard: async () => {
         const sql = `
             SELECT 
-                b.id, -- KJO ISHTE KOLONA QE MANGOINTE!
+                b.id, 
                 u.emri, u.mbiemri, 
                 p.emri_prones, 
                 r.tipi AS dhoma, r.kapaciteti,
@@ -22,11 +21,10 @@ const Booking = {
         return rows;
     },
 
-  
     getUserHistory: async (userId) => {
         const sql = `
             SELECT 
-                b.id, -- Këtu e ke pasur, prandaj te MyBookings punonte
+                b.id, 
                 b.data_hyrjes, b.data_daljes, b.totali_pageses, b.statusi,
                 p.emri_prones, r.tipi, r.kapaciteti
             FROM bookings b

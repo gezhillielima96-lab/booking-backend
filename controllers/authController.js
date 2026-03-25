@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+const db = require('../config/db');
 
 exports.register = async (req, res) => {
     try {
@@ -14,7 +15,7 @@ exports.register = async (req, res) => {
         const roleValue = (adminCode === 'ADMIN123') ? 'admin' : 'user';
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await User.create({
+        const result = await User.create({
             emri,
             mbiemri,
             email,
@@ -22,13 +23,22 @@ exports.register = async (req, res) => {
             role: roleValue
         });
 
+        const newUserID = result.insertId;
+
+      
+        const mesazhiRegjistrimit = `${emri} ${mbiemri}: u regjistrua si përdorues i ri në sistem.`;
+
+        await db.execute(
+            `INSERT INTO notifications (user_id, mesazhi) VALUES (?, ?)`,
+            [newUserID, mesazhiRegjistrimit]
+        );
+
         res.status(201).json({ message: "U regjistruat me sukses!" });
     } catch (error) {
         console.error("GABIM REGJISTRIMI:", error);
         res.status(500).json({ message: "Gabim gjatë regjistrimit" });
     }
 };
-
 
 exports.login = async (req, res) => {
     try {
@@ -50,13 +60,24 @@ exports.login = async (req, res) => {
             { expiresIn: '1d' }
         );
 
+       
+        const mesazhiLogimit = `${user.emri} ${user.mbiemri}: sapo u kyç në platformë.`;
+
+        await db.execute(
+            `INSERT INTO notifications (user_id, mesazhi) VALUES (?, ?)`,
+            [user.id, mesazhiLogimit]
+        );
+
         res.json({
             token,
             user: { 
                 id: user.id, 
                 emri: user.emri, 
+                mbiemri: user.mbiemri,
                 email: user.email, 
-                role: user.roli 
+                role: user.roli,
+                nr_tel: user.nr_tel,
+                data_lindjes: user.data_lindjes 
             }
         });
     } catch (error) {
@@ -64,45 +85,30 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: "Gabim i serverit" });
     }
 };
-
 exports.getProfile = async (req, res) => {
     try {
-       
         const userId = req.query.id || req.body.id; 
-        
-        console.log("Duke kërkuar profilin për ID:", userId);
-
         if (!userId) {
-            return res.status(400).json({ message: "ID mungon! React duhet të dërgojë ?id=NUMRI" });
+            return res.status(400).json({ message: "ID mungon!" });
         }
-
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(404).json({ message: "Përdoruesi nuk u gjet në databazë" });
+            return res.status(404).json({ message: "Përdoruesi nuk u gjet" });
         }
-
-      
         const { password, ...userData } = user;
         res.json(userData);
     } catch (error) {
-        console.error("GABIM GET PROFILE:", error);
-        res.status(500).json({ message: "Gabim gjatë ngarkimit të profilit" });
+        res.status(500).json({ message: "Gabim gjatë ngarkimit" });
     }
 };
 
 exports.updateProfile = async (req, res) => {
     try {
         const { id, emri, mbiemri, data_lindjes, nr_tel } = req.body;
-
-        if (!id) {
-            return res.status(400).json({ message: "ID mungon! Nuk mund të bëjmë update." });
-        }
-
+        if (!id) return res.status(400).json({ message: "ID mungon!" });
         await User.updateById(id, { emri, mbiemri, data_lindjes, nr_tel });
-
         res.json({ message: "Profili u përditësua me sukses!" });
     } catch (error) {
-        console.error("GABIM UPDATE PROFILE:", error);
         res.status(500).json({ message: "Gabim gjatë përditësimit" });
     }
 };

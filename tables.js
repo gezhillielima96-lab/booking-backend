@@ -77,19 +77,23 @@ con.query(sqlMedia, function (err, result) {
   });
 
   // 5. Tabela Bookings
-  let sqlBookings = `CREATE TABLE IF NOT EXISTS bookings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    room_id INT NOT NULL,
-    data_hyrjes DATE NOT NULL,
-    data_daljes DATE NOT NULL,
-    totali_pageses DECIMAL(10, 2) NOT NULL,
-    statusi ENUM('ne pritje', 'konfirmuar', 'anuluar') DEFAULT 'ne pritje',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
-  )`;
-  con.query(sqlBookings, function (err, result) {
+ const createBookingsTable = `
+CREATE TABLE IF NOT EXISTS bookings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  property_id INT NOT NULL, -- Kjo eshte kolona qe te mungonte
+  room_id INT NOT NULL,
+  data_hyrjes DATE NOT NULL,
+  data_daljes DATE NOT NULL,
+  totali_pageses DECIMAL(10,2),
+  statusi VARCHAR(50) DEFAULT 'ne pritje',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE,
+  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+);
+`;
+  con.query(createBookingsTable, function (err, result) {
     if (err) throw err;
     console.log("Table 'bookings' created");
   });
@@ -109,18 +113,19 @@ con.query(sqlMedia, function (err, result) {
     if (err) throw err;
     console.log("Table 'payments' created");
   });
-// 7. Tabela Reviews (E përditësuar për Hotel dhe Dhomë)
+// 7. Tabela Reviews 
 let sqlReviews = `CREATE TABLE IF NOT EXISTS reviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     property_id INT NOT NULL,
-    room_id INT NULL, -- E kemi bërë NULL që të pranojë vlerësime edhe vetëm për hotelin
+    room_id INT NULL, 
     nota INT CHECK (nota >= 1 AND nota <= 5),
     komenti TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
 )`;
 
 con.query(sqlReviews, function (err, result) {
@@ -131,17 +136,24 @@ con.query(sqlReviews, function (err, result) {
     }
 });
 
-  // 8. Tabela Notifications
-  let sqlNotifications = `CREATE TABLE IF NOT EXISTS notifications (
+// 8. Tabela Notifications
+let sqlNotifications = `CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    review_id INT NULL, 
     mesazhi TEXT NOT NULL,
     statusi_leximit BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
   )`;
-  con.query(sqlNotifications, function (err, result) {
-    if (err) throw err;
-    console.log("Table 'notifications' created");
-  });
+
+con.query(sqlNotifications, function (err, result) {
+    if (err) {
+        console.log("Gabim gjatë krijimit të tabelës 'notifications':", err.message);
+    } else {
+        console.log("Table 'notifications' created/updated successfully");
+    }
+});
+
 });

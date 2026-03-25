@@ -29,4 +29,9 @@ router.get('/room-bookings/:roomId', bookingController.getRoomBookings);
 router.post('/reviews/add', reviewController.addReview);
 router.get('/reviews/stats/:propertyId', reviewController.getPropertyStats);
 router.get('/reviews/:propertyId', reviewController.getReviewsByProperty);
+router.get('/admin/notifications', reviewController.getAdminNotifications);
+router.get('/notifications/admin', reviewController.getAdminNotifications);
+router.put('/notifications/:id/read', reviewController.deleteNotification);
+
+
 module.exports = router;
